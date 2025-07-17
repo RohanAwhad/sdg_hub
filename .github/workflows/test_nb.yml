@@ -50,6 +50,40 @@ jobs:
               "max_tokens": 2
             }'
 
+  test-mock-server:
+    name: Test Mock Inference Server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
+      - name: Install dependencies
+        run: |
+          pip install flask werkzeug click pyyaml
 
+      - name: Create test config
+        run: |
+          cat > test_config.yml << 'EOF'
+          matches:
+            - contains: ["Hello"]
+              response: "Hi there!"
+            - response: "Default response"
+          port: 11434
+          debug: true
+          EOF
+
+      - name: Start mock server
+        run: |
+          python tests/mock_inference_server/app.py -c test_config.yml &
+          sleep 2
+
+      - name: Test completions endpoint
+        run: |
+          curl -X POST http://localhost:11434/v1/completions \
+            -H "Content-Type: application/json" \
+            -d '{"prompt": "Hello world", "model": "test-model"}' \
+            --fail-with-body
