@@ -1,0 +1,55 @@
+name: Test Jupyter Notebooks
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+      - "releases-**"
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - 'tox.ini'
+      - '.github/workflows/test_nb.yml' # This workflow
+  pull_request:
+    branches:
+      - "main"
+      - "releases-**"
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - 'tox.ini'
+      - '.github/workflows/test_nb.yml' # This workflow
+
+env:
+  LC_ALL: en_US.UTF-8
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  test-openai:
+    name: Test OpenAI connectivity
+    runs-on: ubuntu-latest
+    steps:
+      - name: curl OpenAI chat completion
+        run: |
+          sudo apt-get install curl
+          curl https://api.openai.com/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -d '{
+              "model": "gpt-4.1-nano",
+              "messages": [{"role": "user", "content": "Hello!"}],
+              "max_tokens": 2
+            }'
+
+
+
+
